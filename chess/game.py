@@ -19,36 +19,51 @@ def get_images(path=r'../images'):
     return _images
 
 
-"""
-Responsible of all graphics within current gamestate
-"""
 def draw_game_state(screen, game_state, images):
+    """
+    Responsible of all graphics within current game state
+    """
     draw_board(screen)
     draw_pieces(screen, game_state.board, images)
 
 
-"""
-Draw squares on board using screen.
-Note: top left square is always white
-"""
 def draw_board(screen):
+    """
+    Draw squares on board using screen.
+    Note: top left square is always white
+    """
     colours = [pygame.Color("white"), pygame.Color("grey")]
     for x in range(DIMENSIONS_H_W):
         for y in range(DIMENSIONS_H_W):
-            colour = colours[((x+y) % 2)]
-            pygame.draw.rect(screen, colour, pygame.Rect(x*SQUARE_SIZE, y*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            colour = colours[((x + y) % 2)]
+            pygame.draw.rect(screen, colour, pygame.Rect(x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 
-
-
-"""
-Draws pieces on the board using current game state
-"""
 def draw_pieces(screen, board, images):
+    """
+    Draws pieces on the board using current game state
+    """
     for x in range(DIMENSIONS_H_W):
         for y in range(DIMENSIONS_H_W):
             if board[x][y] != '-':
-                screen.blit(images[board[x][y]], pygame.Rect(x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+                screen.blit(images[board[x][y]],
+                            pygame.Rect(x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+
+
+def handle_click(location, game_state, clicks):
+    square = (location[0] // SQUARE_SIZE, location[1] // SQUARE_SIZE)
+    if len(clicks) == 1:
+        if square == clicks[0]:
+            clicks = []
+        else:
+            clicks.append(square)
+            game_state.move_piece(clicks[0], clicks[1])
+            clicks = []
+    elif len(clicks) >= 2:
+        clicks = []
+    else:
+        clicks.append(square)
+    return game_state, clicks
 
 
 def main():
@@ -59,25 +74,13 @@ def main():
     game_state = engine.GameState()
     images = get_images()
     running = True
-    squares_clicked = []
+    clicks = []
     while running:
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 running = False
             if e.type == pygame.MOUSEBUTTONDOWN:
-                location = pygame.mouse.get_pos()
-                square_clicked = (location[0] // SQUARE_SIZE, location[1] // SQUARE_SIZE)
-                if len(squares_clicked) == 1:
-                    if square_clicked == squares_clicked[0]:
-                        squares_clicked = []
-                    else:
-                        squares_clicked.append(square_clicked)
-                        game_state.move_piece(squares_clicked[0], squares_clicked[1])
-                        squares_clicked = []
-                elif len(squares_clicked) >= 2:
-                    squares_clicked = []
-                else:
-                    squares_clicked.append(square_clicked)
+                game_state, clicks = handle_click(pygame.mouse.get_pos(), game_state, clicks)
         draw_game_state(screen, game_state, images)
         clock.tick(MAX_FPS)
         pygame.display.flip()
